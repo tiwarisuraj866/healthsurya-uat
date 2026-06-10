@@ -120,13 +120,13 @@ function RegisterPageContent() {
         },
       });
 
-      // Prepare mobile number verification code
-      await signUp.preparePhoneNumberVerification({
-        strategy: "phone_code",
+      // Prepare email verification code
+      await signUp.prepareEmailAddressVerification({
+        strategy: "email_code",
       });
 
       setOtpSent(true);
-      toast.success(`Verification code sent to +91 ${form.phone}`);
+      toast.success(`Verification code sent to ${form.email}`);
     } catch (err: any) {
       toast.error(err.errors?.[0]?.message || err.message || "Failed to create account.");
     } finally {
@@ -144,7 +144,7 @@ function RegisterPageContent() {
 
     setLoading(true);
     try {
-      const result = await signUp.attemptPhoneNumberVerification({
+      const result = await signUp.attemptEmailAddressVerification({
         code: verificationCode,
       });
 
@@ -333,7 +333,7 @@ function RegisterPageContent() {
       {otpSent && (
         <form onSubmit={onVerifyOtp} className="space-y-4">
           <div className="space-y-1.5 text-center">
-            <Label htmlFor="otp-code">Enter 6-digit Verification Code sent to +91 {form.phone}</Label>
+            <Label htmlFor="otp-code">Enter 6-digit Verification Code sent to {form.email}</Label>
             <Input
               id="otp-code"
               className="text-center font-mono tracking-widest text-lg min-h-10"

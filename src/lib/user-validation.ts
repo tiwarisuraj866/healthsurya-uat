@@ -122,3 +122,11 @@ export function validatePassword(password: string): string | null {
 export function validateFullName(name: string): string | null {
   return validateField(fullNameSchema, name);
 }
+
+export function validateIdentifier(identifier: string): string | null {
+  if (!identifier || identifier.trim().length === 0) {
+    return "Email or User ID is required";
+  }
+  return null;
+}
+

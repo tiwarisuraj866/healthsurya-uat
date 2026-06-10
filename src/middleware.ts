@@ -68,12 +68,8 @@ export default clerkMiddleware(async (auth, req) => {
         response = NextResponse.redirect(new URL("/unauthorized", req.url));
         return applySecurityHeaders(response);
       }
-      if (verificationStatus === "pending" || verificationStatus === "under_review") {
-        response = NextResponse.redirect(new URL("/verification-pending", req.url));
-        return applySecurityHeaders(response);
-      }
       if (verificationStatus !== "approved") {
-        response = NextResponse.redirect(new URL("/unauthorized", req.url));
+        response = NextResponse.redirect(new URL("/verification-pending", req.url));
         return applySecurityHeaders(response);
       }
     }
@@ -83,12 +79,8 @@ export default clerkMiddleware(async (auth, req) => {
         response = NextResponse.redirect(new URL("/unauthorized", req.url));
         return applySecurityHeaders(response);
       }
-      if (verificationStatus === "pending" || verificationStatus === "under_review") {
-        response = NextResponse.redirect(new URL("/verification-pending", req.url));
-        return applySecurityHeaders(response);
-      }
       if (verificationStatus !== "approved") {
-        response = NextResponse.redirect(new URL("/unauthorized", req.url));
+        response = NextResponse.redirect(new URL("/verification-pending", req.url));
         return applySecurityHeaders(response);
       }
     }
@@ -98,12 +90,8 @@ export default clerkMiddleware(async (auth, req) => {
         response = NextResponse.redirect(new URL("/unauthorized", req.url));
         return applySecurityHeaders(response);
       }
-      if (verificationStatus === "pending" || verificationStatus === "under_review") {
-        response = NextResponse.redirect(new URL("/verification-pending", req.url));
-        return applySecurityHeaders(response);
-      }
       if (verificationStatus !== "approved") {
-        response = NextResponse.redirect(new URL("/unauthorized", req.url));
+        response = NextResponse.redirect(new URL("/verification-pending", req.url));
         return applySecurityHeaders(response);
       }
     }
@@ -113,12 +101,8 @@ export default clerkMiddleware(async (auth, req) => {
         response = NextResponse.redirect(new URL("/unauthorized", req.url));
         return applySecurityHeaders(response);
       }
-      if (verificationStatus === "pending" || verificationStatus === "under_review") {
-        response = NextResponse.redirect(new URL("/verification-pending", req.url));
-        return applySecurityHeaders(response);
-      }
       if (verificationStatus !== "approved") {
-        response = NextResponse.redirect(new URL("/unauthorized", req.url));
+        response = NextResponse.redirect(new URL("/verification-pending", req.url));
         return applySecurityHeaders(response);
       }
     }

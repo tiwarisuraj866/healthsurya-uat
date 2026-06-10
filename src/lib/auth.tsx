@@ -62,6 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return null;
       };
       const mockRole = getCookie("mock_role") || "admin";
+      const mockVerStatus = getCookie("mock_verification_status") || "approved";
       return {
         id: clerkId,
         clerk_user_id: clerkId,
@@ -69,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: `${mockRole}@healthsurya.com`,
         full_name: mockRole === "admin" ? "Suraj Tiwari" : mockRole === "doctor" ? "Dr. Rajesh Gupta" : mockRole === "lab" ? "PathCare Diagnostics" : `Test ${mockRole.charAt(0).toUpperCase() + mockRole.slice(1)}`,
         role: mockRole,
-        verification_status: "approved",
+        verification_status: mockVerStatus as any,
         is_active: true,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),

@@ -1314,6 +1314,20 @@ export async function verifyPartnerRegistration(params: {
           await supabaseAdmin.from("labs" as any).update({ verified: true } as any).eq("owner_id", profile.clerk_user_id);
         }
       }
+    } else if (params.action === "reject") {
+      const { data: profile } = (await supabaseAdmin
+        .from("profiles" as any)
+        .select("clerk_user_id")
+        .eq("id", params.userId)
+        .single()) as any;
+
+      if (profile?.clerk_user_id) {
+        if (params.partnerType === "doctor") {
+          await supabaseAdmin.from("doctors" as any).update({ verified: false, published: false } as any).eq("owner_id", profile.clerk_user_id);
+        } else if (params.partnerType === "lab") {
+          await supabaseAdmin.from("labs" as any).update({ verified: false } as any).eq("owner_id", profile.clerk_user_id);
+        }
+      }
     }
 
     // 4. Log audit log
@@ -1817,6 +1831,18 @@ export async function adminDecideVerification(params: {
             await supabaseAdmin
               .from("labs" as any)
               .update({ verified: true } as any)
+              .eq("owner_id", profile.clerk_user_id);
+          }
+        } else if ((status === "rejected" || status === "suspended") && profile.clerk_user_id) {
+          if (ver.partner_type === "doctor") {
+            await supabaseAdmin
+              .from("doctors" as any)
+              .update({ verified: false, published: false } as any)
+              .eq("owner_id", profile.clerk_user_id);
+          } else if (ver.partner_type === "laboratory" || ver.partner_type === "lab") {
+            await supabaseAdmin
+              .from("labs" as any)
+              .update({ verified: false } as any)
               .eq("owner_id", profile.clerk_user_id);
           }
         }

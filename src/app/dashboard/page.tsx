@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { CallAlertsBanner } from "@/components/CallAlertsBanner";
 import { Button } from "@/components/ui/button";
-import { Beaker, Calendar, ShieldCheck, Stethoscope, Pill, Truck, Settings, Globe, BarChart3, UserCog } from "lucide-react";
+import { Beaker, Calendar, ShieldCheck, Stethoscope, Pill, Truck, Settings, Globe, BarChart3, UserCog, ShieldAlert, Clock, FileWarning } from "lucide-react";
 import Link from "next/link";
 
 function StatCard({ label, value, icon: Icon }: { label: string; value: string | number; icon: any }) {
@@ -54,9 +54,61 @@ export default function Dashboard() {
   const isAdmin = roles.includes("admin") || roles.includes("super_admin");
   const isDoctor = roles.includes("doctor");
   const isCourier = roles.includes("courier");
+  const isPartner = isDoctor || isLab || roles.includes("pharmacy") || roles.includes("franchise");
+  const isKycApproved = user?.verification_status === "approved";
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
+      {isPartner && !isKycApproved && (
+        <>
+          {user?.verification_status === "pending" || user?.verification_status === "under_review" ? (
+            <div className="mb-6 rounded-2xl border border-warning/20 bg-warning/5 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="space-y-1">
+                <h4 className="text-sm font-semibold flex items-center gap-2 text-warning font-sans">
+                  <Clock className="h-4 w-4 shrink-0 animate-spin" style={{ animationDuration: '3s' }} />
+                  KYC Onboarding Under Review
+                </h4>
+                <p className="text-xs text-muted-foreground">
+                  Our compliance team is verifying your registration details as per Indian regulations. Listings will activate once approved.
+                </p>
+              </div>
+              <Button size="sm" variant="outline" className="glass self-start sm:self-auto font-semibold" asChild>
+                <Link href="/verify">Check Uploads</Link>
+              </Button>
+            </div>
+          ) : user?.verification_status === "rejected" ? (
+            <div className="mb-6 rounded-2xl border border-destructive/20 bg-destructive/5 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="space-y-1">
+                <h4 className="text-sm font-semibold flex items-center gap-2 text-destructive font-sans">
+                  <ShieldAlert className="h-4 w-4 shrink-0" />
+                  KYC Onboarding Rejected
+                </h4>
+                <p className="text-xs text-muted-foreground">
+                  Your verification documents did not meet regulatory standards. Please update your certificates to restore service listing.
+                </p>
+              </div>
+              <Button size="sm" variant="destructive" className="self-start sm:self-auto text-white font-semibold" asChild>
+                <Link href="/verify">Update Documents</Link>
+              </Button>
+            </div>
+          ) : (
+            <div className="mb-6 rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="space-y-1">
+                <h4 className="text-sm font-semibold flex items-center gap-2 text-amber-600 font-sans">
+                  <FileWarning className="h-4 w-4 shrink-0 animate-pulse" />
+                  KYC Document Verification Required
+                </h4>
+                <p className="text-xs text-muted-foreground">
+                  Please complete your KYC by uploading license certificates (NMC / PCI compliant) to list your services in patient searches.
+                </p>
+              </div>
+              <Button size="sm" className="btn-gradient self-start sm:self-auto text-white font-semibold" asChild>
+                <Link href="/verify">Start KYC Now</Link>
+              </Button>
+            </div>
+          )}
+        </>
+      )}
       {(isLab || isAdmin) && (
         <CallAlertsBanner mode="partner" partnerType={isLab ? "lab" : "pharmacy"} />
       )}

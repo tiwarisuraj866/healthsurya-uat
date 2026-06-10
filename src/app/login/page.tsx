@@ -14,12 +14,12 @@ import { RolePicker } from "@/components/auth/RolePicker";
 import { LoginCaptcha, validateLoginCaptcha } from "@/components/auth/LoginCaptcha";
 import { FieldError } from "@/components/auth/FieldError";
 import { getAuthRole, parseAuthRole, type AuthRoleId } from "@/lib/auth-roles";
-import { validateEmail, validatePhone } from "@/lib/user-validation";
+import { validateEmail, validatePhone, validateIdentifier } from "@/lib/user-validation";
 import { toE164India } from "@/lib/otp";
 import { LogIn, Mail, Phone, KeyRound, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-type LoginTab = "password" | "phone-otp";
+type LoginTab = "password" | "email-otp";
 
 function LoginPageContent() {
   const { isLoaded, signIn, setActive } = useSignIn() as any;
@@ -34,17 +34,17 @@ function LoginPageContent() {
   const [intentRole, setIntentRole] = useState<AuthRoleId>(() => parseAuthRole(roleParam));
   const roleConfig = getAuthRole(intentRole);
 
-  const [tab, setTab] = useState<LoginTab>("phone-otp");
+  const [tab, setTab] = useState<LoginTab>("email-otp");
   const [loading, setLoading] = useState(false);
 
   // Password Login state
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
-  const [emailError, setEmailError] = useState<string | null>(null);
+  const [identifierError, setIdentifierError] = useState<string | null>(null);
 
-  // Phone OTP Login state
-  const [otpPhone, setOtpPhone] = useState("");
-  const [otpPhoneError, setOtpPhoneError] = useState<string | null>(null);
+  // Email OTP Login state
+  const [otpEmail, setOtpEmail] = useState("");
+  const [otpEmailError, setOtpEmailError] = useState<string | null>(null);
   const [otpSent, setOtpSent] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
 
@@ -57,9 +57,9 @@ function LoginPageContent() {
 
   // Clear fields and reset state on component mount / revisit
   useEffect(() => {
-    setEmail("");
+    setIdentifier("");
     setPassword("");
-    setOtpPhone("");
+    setOtpEmail("");
     setVerificationCode("");
     setCaptchaInput("");
     setOtpSent(false);
@@ -89,9 +89,9 @@ function LoginPageContent() {
       toast.error("Please check the 'I agree to the Terms & Conditions' checkbox to proceed.");
       return;
     }
-    const err = validateEmail(email);
+    const err = validateIdentifier(identifier);
     if (err) {
-      setEmailError(err);
+      setIdentifierError(err);
       return;
     }
     if (!validateLoginCaptcha(captchaInput, captchaExpected.current)) {
@@ -102,7 +102,7 @@ function LoginPageContent() {
     setLoading(true);
     try {
       const result = await signIn.create({
-        identifier: email,
+        identifier: identifier,
         password,
       });
 
@@ -120,16 +120,16 @@ function LoginPageContent() {
     }
   };
 
-  // ── Send Phone OTP (Clerk) ──
-  const onSendPhoneOtp = async (e: React.FormEvent) => {
+  // ── Send Email OTP (Clerk) ──
+  const onSendEmailOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!agreeTerms) {
       toast.error("Please check the 'I agree to the Terms & Conditions' checkbox to proceed.");
       return;
     }
-    const err = validatePhone(otpPhone);
+    const err = validateEmail(otpEmail);
     if (err) {
-      setOtpPhoneError(err);
+      setOtpEmailError(err);
       return;
     }
     if (!validateLoginCaptcha(captchaInput, captchaExpected.current)) {
@@ -139,29 +139,28 @@ function LoginPageContent() {
 
     setLoading(true);
     try {
-      const formattedPhone = toE164India(otpPhone);
       const result = await signIn.create({
-        identifier: formattedPhone,
+        identifier: otpEmail,
       });
 
-      // Find the phone code strategy factor
-      const phoneCodeFactor = result.supportedFirstFactors.find(
-        (factor: any) => factor.strategy === "phone_code"
+      // Find the email code strategy factor
+      const emailCodeFactor = result.supportedFirstFactors.find(
+        (factor: any) => factor.strategy === "email_code"
       ) as any;
 
-      if (!phoneCodeFactor) {
-        toast.error("Phone OTP login is not enabled or supported for this number.");
+      if (!emailCodeFactor) {
+        toast.error("Email OTP login is not enabled or supported for this email.");
         setLoading(false);
         return;
       }
 
       await signIn.prepareFirstFactor({
-        strategy: "phone_code",
-        phoneNumberId: phoneCodeFactor.phoneNumberId,
+        strategy: "email_code",
+        emailAddressId: emailCodeFactor.emailAddressId,
       });
 
       setOtpSent(true);
-      toast.success(`OTP sent to +91 ${otpPhone}`);
+      toast.success(`OTP sent to ${otpEmail}`);
     } catch (err: any) {
       toast.error(err.errors?.[0]?.message || err.message || "Failed to send OTP code.");
     } finally {
@@ -169,7 +168,7 @@ function LoginPageContent() {
     }
   };
 
-  // ── Verify Phone OTP (Clerk) ──
+  // ── Verify Email OTP (Clerk) ──
   const onVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (verificationCode.length !== 6) {
@@ -180,7 +179,7 @@ function LoginPageContent() {
     setLoading(true);
     try {
       const result = await signIn.attemptFirstFactor({
-        strategy: "phone_code",
+        strategy: "email_code",
         code: verificationCode,
       });
 
@@ -252,36 +251,29 @@ function LoginPageContent() {
 
       {/* Tab switcher */}
       <div className="mb-4 flex gap-1 rounded-xl bg-muted p-1">
-        <TabBtn id="phone-otp" icon={Phone} label="Mobile OTP" />
+        <TabBtn id="email-otp" icon={Mail} label="Email OTP" />
         <TabBtn id="password" icon={KeyRound} label="Password" />
       </div>
 
-      {/* ── Mobile OTP Tab ── */}
-      {tab === "phone-otp" && !otpSent && (
-        <form onSubmit={onSendPhoneOtp} className="space-y-3">
+      {/* ── Email OTP Tab ── */}
+      {tab === "email-otp" && !otpSent && (
+        <form onSubmit={onSendEmailOtp} className="space-y-3">
           <div className="space-y-1.5">
-            <Label htmlFor="otp-phone">Mobile number</Label>
-            <div className="flex gap-2">
-              <span className="flex h-10 items-center rounded-md border bg-muted px-3 text-sm font-mono text-muted-foreground select-none">
-                +91
-              </span>
-              <Input
-                id="otp-phone"
-                className="min-h-10 font-mono"
-                type="tel"
-                inputMode="numeric"
-                required
-                maxLength={10}
-                placeholder="9876543210"
-                value={otpPhone}
-                onChange={(e) => {
-                  setOtpPhone(e.target.value.replace(/\D/g, ""));
-                  setOtpPhoneError(null);
-                }}
-                onBlur={() => setOtpPhoneError(validatePhone(otpPhone))}
-              />
-            </div>
-            <FieldError error={otpPhoneError} />
+            <Label htmlFor="otp-email">Email Address</Label>
+            <Input
+              id="otp-email"
+              className="min-h-10"
+              type="email"
+              required
+              placeholder="name@example.com"
+              value={otpEmail}
+              onChange={(e) => {
+                setOtpEmail(e.target.value);
+                setOtpEmailError(null);
+              }}
+              onBlur={() => setOtpEmailError(validateEmail(otpEmail))}
+            />
+            <FieldError error={otpEmailError} />
           </div>
 
           <LoginCaptcha
@@ -315,7 +307,7 @@ function LoginPageContent() {
               </>
             ) : (
               <>
-                <Phone className="h-4 w-4 mr-2" />
+                <Mail className="h-4 w-4 mr-2" />
                 Send OTP Code
               </>
             )}
@@ -324,10 +316,10 @@ function LoginPageContent() {
       )}
 
       {/* OTP Verification form */}
-      {tab === "phone-otp" && otpSent && (
+      {tab === "email-otp" && otpSent && (
         <form onSubmit={onVerifyOtp} className="space-y-4">
           <div className="space-y-1.5 text-center">
-            <Label htmlFor="otp-code">Enter 6-digit Verification Code sent to +91 {otpPhone}</Label>
+            <Label htmlFor="otp-code">Enter 6-digit Verification Code sent to {otpEmail}</Label>
             <Input
               id="otp-code"
               className="text-center font-mono tracking-widest text-lg min-h-10"
@@ -356,7 +348,7 @@ function LoginPageContent() {
             className="w-full text-xs text-muted-foreground"
             onClick={() => setOtpSent(false)}
           >
-            Change mobile number
+            Change email address
           </Button>
         </form>
       )}
@@ -365,21 +357,20 @@ function LoginPageContent() {
       {tab === "password" && (
         <form onSubmit={onPasswordSubmit} className="space-y-3">
           <div className="space-y-1.5">
-            <Label htmlFor="login-email">Email</Label>
+            <Label htmlFor="login-identifier">Email or User ID</Label>
             <Input
-              id="login-email"
+              id="login-identifier"
               className="min-h-10"
-              type="email"
+              type="text"
               required
-              autoComplete="email"
-              value={email}
+              value={identifier}
               onChange={(e) => {
-                setEmail(e.target.value);
-                setEmailError(null);
+                setIdentifier(e.target.value);
+                setIdentifierError(null);
               }}
-              onBlur={() => setEmailError(validateEmail(email))}
+              onBlur={() => setIdentifierError(validateIdentifier(identifier))}
             />
-            <FieldError error={emailError} />
+            <FieldError error={identifierError} />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="login-password">Password</Label>
